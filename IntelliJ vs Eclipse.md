@@ -20,8 +20,9 @@
 | Delete Line                                           | Ctrl + Y                    | Ctrl + D             |
 | Go To Line                                            | Ctrl + G                    | Ctrl + L             |
 |                                                       |                             |                      |
-| Surround Line / Selection                             |                             |                      |
-|                                                       |                             |                      |
+| Surround Line / Selection                             | Ctrl + Alt + T              | ?                    |
+| Introduce Variable                                    | Ctrl + Alt + V              | ?                    |
+| Smart code completion                                 | Ctrl + Shift + Enter        | ?                    |
 | Find Usages                                           | (Ctrl + ) Alt + F7          | Ctrl + Shift + G     |
 |                                                       |                             |                      |
 | Toggle Window Size                                    | Ctrl + Shift + F12          | Ctrl + M             |
