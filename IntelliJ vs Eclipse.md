@@ -56,6 +56,6 @@
 
 ### Awesome features
 
-**IntelliJ**: Compare with Clipboard!
+**IntelliJ**: Compare with Clipboard! Paste older Clipboards: Ctrl + Shift + V
 
 Alt + J Multiple Selection / Renaming
