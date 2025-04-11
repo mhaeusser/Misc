@@ -66,7 +66,33 @@ def get_all_subgroups(base_url, group_id, private_token, page=1, subgroups=None)
         print(f"Error fetching subgroups: {e}")
         return subgroups
 
-def clone_all_repos(base_url, group_id, output_dir=".", private_token=None):
+def update_existing_repo(repo_path):
+    """Update an existing git repository"""
+    if not os.path.isdir(os.path.join(repo_path, '.git')):
+        print(f"Directory {repo_path} is not a git repository, skipping update")
+        return False
+    
+    print(f"Updating {repo_path}...")
+    try:
+        # Fetch all branches and prune deleted ones
+        subprocess.run(["git", "-C", repo_path, "fetch", "--all", "--prune"], check=True)
+        
+        # Get current branch
+        result = subprocess.run(["git", "-C", repo_path, "branch", "--show-current"], 
+                               check=True, capture_output=True, text=True)
+        current_branch = result.stdout.strip()
+        
+        if current_branch:
+            # Pull changes for the current branch
+            subprocess.run(["git", "-C", repo_path, "pull", "origin", current_branch], check=True)
+        
+        print(f"Successfully updated {repo_path}")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to update {repo_path}: {e}")
+        return False
+
+def clone_all_repos(base_url, group_id, output_dir=".", private_token=None, update_existing=False):
     """Clone all repositories in a GitLab group and its subgroups"""
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -83,15 +109,23 @@ def clone_all_repos(base_url, group_id, output_dir=".", private_token=None):
         projects = get_all_group_projects(base_url, gid, private_token)
         all_projects.extend(projects)
     
-    print(f"Found {len(all_projects)} repositories to clone")
+    print(f"Found {len(all_projects)} repositories")
     
-    # Clone each repository
+    # Process each repository
     for project in all_projects:
         repo_url = project['ssh_url_to_repo'] if private_token else project['http_url_to_repo']
         repo_path = project['path_with_namespace']
         full_path = os.path.join(output_dir, repo_path)
         
-        # Create directory structure
+        # Check if repository already exists
+        if os.path.exists(full_path):
+            if update_existing:
+                update_existing_repo(full_path)
+            else:
+                print(f"Repository {repo_path} already exists, skipping (use --update to update)")
+            continue
+        
+        # Create directory structure and clone new repository
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         
         print(f"Cloning {repo_path}...")
@@ -109,7 +143,8 @@ if __name__ == "__main__":
     parser.add_argument("group_id", help="GitLab group ID (numeric)")
     parser.add_argument("--output-dir", default=".", help="Output directory for cloned repositories")
     parser.add_argument("--private-token", help="GitLab private token for authentication (required for private repos)")
+    parser.add_argument("--update", action="store_true", help="Update existing repositories instead of skipping them")
     
     args = parser.parse_args()
     
-    clone_all_repos(args.base_url, args.group_id, args.output_dir, args.private_token)
+    clone_all_repos(args.base_url, args.group_id, args.output_dir, args.private_token, args.update)
